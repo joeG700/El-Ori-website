@@ -113,7 +113,7 @@ input[type=file]{padding:8px}
 const $=selector=>document.querySelector(selector);
 const config=window.SUPABASE_CONFIG||{};
 const client=window.supabase&&config.url&&config.anonKey?window.supabase.createClient(config.url,config.anonKey):null;
-const ownerEmail=(config.adminEmail||"").toLowerCase();
+const adminEmails=(config.adminEmails||[]).map(email=>String(email).toLowerCase());
 let products=[];
 let selectedProduct=null;
 let previewUrl="";
@@ -186,7 +186,7 @@ async function loadProducts(){
   products=data||[];renderProducts();
 }
 async function enterWorkspace(user){
-  if((user.email||"").toLowerCase()!==ownerEmail){
+  if(!adminEmails.includes((user.email||"").toLowerCase())){
     await client.auth.signOut();
     message($("#loginMessage"),"This account is not authorized to manage the shop.",true);
     return;

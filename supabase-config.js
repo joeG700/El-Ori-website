@@ -2,5 +2,5 @@
 window.SUPABASE_CONFIG={
   url:"https://bofoipmjwieyyomqfufh.supabase.co",
   anonKey:"sb_publishable_S6GMcTev-jDnRoRucj94ZQ_Gnx0CvCn",
-  adminEmail:"elorriii02@gmail.com"
+  adminEmails:["elorriii02@gmail.com","joeghartey419@gmail.com"]
 };

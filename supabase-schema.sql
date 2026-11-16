@@ -17,26 +17,26 @@ drop policy if exists "Public read active products" on public.products;
 create policy "Public read active products"
   on public.products for select
   to anon, authenticated
-  using (active or (select auth.jwt() ->> 'email') = 'elorriii02@gmail.com');
+  using (active or (select auth.jwt() ->> 'email') in ('elorriii02@gmail.com', 'joeghartey419@gmail.com'));
 
 drop policy if exists "Admin insert products" on public.products;
 create policy "Admin insert products"
   on public.products for insert
   to authenticated
-  with check ((select auth.jwt() ->> 'email') = 'elorriii02@gmail.com');
+  with check ((select auth.jwt() ->> 'email') in ('elorriii02@gmail.com', 'joeghartey419@gmail.com'));
 
 drop policy if exists "Admin update products" on public.products;
 create policy "Admin update products"
   on public.products for update
   to authenticated
-  using ((select auth.jwt() ->> 'email') = 'elorriii02@gmail.com')
-  with check ((select auth.jwt() ->> 'email') = 'elorriii02@gmail.com');
+  using ((select auth.jwt() ->> 'email') in ('elorriii02@gmail.com', 'joeghartey419@gmail.com'))
+  with check ((select auth.jwt() ->> 'email') in ('elorriii02@gmail.com', 'joeghartey419@gmail.com'));
 
 drop policy if exists "Admin delete products" on public.products;
 create policy "Admin delete products"
   on public.products for delete
   to authenticated
-  using ((select auth.jwt() ->> 'email') = 'elorriii02@gmail.com');
+  using ((select auth.jwt() ->> 'email') in ('elorriii02@gmail.com', 'joeghartey419@gmail.com'));
 
 insert into public.products (slug, name, category, price)
 values
@@ -66,7 +66,7 @@ create policy "Admin upload product images"
   to authenticated
   with check (
     bucket_id = 'product-images'
-    and (select auth.jwt() ->> 'email') = 'elorriii02@gmail.com'
+    and (select auth.jwt() ->> 'email') in ('elorriii02@gmail.com', 'joeghartey419@gmail.com')
   );
 
 drop policy if exists "Admin update product images" on storage.objects;
@@ -75,11 +75,11 @@ create policy "Admin update product images"
   to authenticated
   using (
     bucket_id = 'product-images'
-    and (select auth.jwt() ->> 'email') = 'elorriii02@gmail.com'
+    and (select auth.jwt() ->> 'email') in ('elorriii02@gmail.com', 'joeghartey419@gmail.com')
   )
   with check (
     bucket_id = 'product-images'
-    and (select auth.jwt() ->> 'email') = 'elorriii02@gmail.com'
+    and (select auth.jwt() ->> 'email') in ('elorriii02@gmail.com', 'joeghartey419@gmail.com')
   );
 
 drop policy if exists "Admin delete product images" on storage.objects;
@@ -88,5 +88,5 @@ create policy "Admin delete product images"
   to authenticated
   using (
     bucket_id = 'product-images'
-    and (select auth.jwt() ->> 'email') = 'elorriii02@gmail.com'
+    and (select auth.jwt() ->> 'email') in ('elorriii02@gmail.com', 'joeghartey419@gmail.com')
   );
