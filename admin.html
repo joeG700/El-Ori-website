@@ -28,6 +28,7 @@ h2{font-size:1.5rem;line-height:1.2;margin-bottom:18px}
 .lead{color:var(--soft);margin-top:8px}
 [hidden]{display:none!important}
 #loginView{max-width:420px;margin:32px auto}
+#passwordView{max-width:420px;margin:32px auto}
 #loginForm,.editor{display:grid;gap:16px}
 label{display:grid;gap:6px;font-weight:700;font-size:.95rem}
 input[type=email],input[type=password],input[type=text],input[type=number],input[type=file]{width:100%;border:1px solid var(--line);border-radius:6px;padding:11px 12px;color:var(--ink);background:var(--bg)}
@@ -36,6 +37,7 @@ input[type=file]{padding:8px}
 .btn{border:0;border-radius:4px;padding:11px 18px;font-weight:700;color:#1c1426;background:var(--grad)}
 .btn.secondary{background:transparent;border:1px solid var(--lav);color:var(--ink)}
 .btn.danger{background:transparent;border:1px solid #bd5565;color:#8d2636}
+.text-btn{border:0;background:transparent;color:var(--soft);padding:2px 0;text-decoration:underline;text-underline-offset:3px}
 .message{min-height:1.5em;color:var(--soft);margin:12px 0}
 .message.error{color:#a32236}
 #workspace{margin-top:24px}
@@ -73,6 +75,26 @@ input[type=file]{padding:8px}
       <label>Email<input id="loginEmail" type="email" autocomplete="username" required></label>
       <label>Password<input id="loginPassword" type="password" autocomplete="current-password" required></label>
       <button class="btn" type="submit" id="loginButton">Sign in</button>
+    </form>
+    <button class="text-btn" id="showRecovery" type="button">Set or reset password</button>
+    <form id="recoveryForm" hidden>
+      <p class="lead">We’ll email you a secure link to set a new password.</p>
+      <label>Email<input id="recoveryEmail" type="email" autocomplete="email" required></label>
+      <div class="actions">
+        <button class="btn" type="submit" id="recoveryButton">Send reset link</button>
+        <button class="btn secondary" id="cancelRecovery" type="button">Back to sign in</button>
+      </div>
+    </form>
+  </section>
+
+  <section id="passwordView" hidden>
+    <h1>Set your admin password</h1>
+    <p class="lead">Choose a password for your product admin account.</p>
+    <p class="message" id="passwordMessage" role="status" aria-live="polite"></p>
+    <form id="passwordForm">
+      <label>New password<input id="newPassword" type="password" autocomplete="new-password" minlength="8" required></label>
+      <label>Confirm password<input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" required></label>
+      <button class="btn" type="submit" id="passwordButton">Set password</button>
     </form>
   </section>
 
@@ -114,6 +136,7 @@ const $=selector=>document.querySelector(selector);
 const config=window.SUPABASE_CONFIG||{};
 const client=window.supabase&&config.url&&config.anonKey?window.supabase.createClient(config.url,config.anonKey):null;
 const adminEmails=(config.adminEmails||[]).map(email=>String(email).toLowerCase());
+const recoveryMode=new URLSearchParams(location.hash.slice(1)).get("type")==="recovery";
 let products=[];
 let selectedProduct=null;
 let previewUrl="";
@@ -188,6 +211,8 @@ async function loadProducts(){
 async function enterWorkspace(user){
   if(!adminEmails.includes((user.email||"").toLowerCase())){
     await client.auth.signOut();
+    $("#loginView").hidden=false;
+    $("#passwordView").hidden=true;
     message($("#loginMessage"),"This account is not authorized to manage the shop.",true);
     return;
   }
@@ -201,6 +226,9 @@ async function enterWorkspace(user){
 if(!client){
   message($("#loginMessage"),"Connect the Supabase project in supabase-config.js before signing in.",true);
   $("#loginButton").disabled=true;
+}else if(recoveryMode){
+  $("#loginView").hidden=true;
+  $("#passwordView").hidden=false;
 }else{
   client.auth.getSession().then(({data,error})=>{
     if(error){message($("#loginMessage"),error.message,true);return;}
@@ -217,6 +245,43 @@ $("#loginForm").addEventListener("submit",async event=>{
   $("#loginButton").disabled=false;
   if(error){message($("#loginMessage"),error.message,true);return;}
   await enterWorkspace(data.user);
+});
+
+$("#showRecovery").addEventListener("click",()=>{
+  $("#recoveryEmail").value=$("#loginEmail").value.trim();
+  $("#loginForm").hidden=true;
+  $("#showRecovery").hidden=true;
+  $("#recoveryForm").hidden=false;
+  $("#recoveryEmail").focus();
+});
+$("#cancelRecovery").addEventListener("click",()=>{
+  $("#recoveryForm").hidden=true;
+  $("#loginForm").hidden=false;
+  $("#showRecovery").hidden=false;
+  message($("#loginMessage"),"");
+});
+$("#recoveryForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  if(!client)return;
+  const button=$("#recoveryButton");button.disabled=true;
+  const redirectTo=new URL("admin.html",location.href).href;
+  const {error}=await client.auth.resetPasswordForEmail($("#recoveryEmail").value.trim(),{redirectTo});
+  button.disabled=false;
+  if(error){message($("#loginMessage"),error.message,true);return;}
+  message($("#loginMessage"),"If the address is authorized, a password link has been sent.");
+});
+$("#passwordForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  const password=$("#newPassword").value;
+  if(password!==$("#confirmPassword").value){message($("#passwordMessage"),"Passwords do not match.",true);return;}
+  const button=$("#passwordButton");button.disabled=true;
+  const {data,error}=await client.auth.updateUser({password});
+  button.disabled=false;
+  if(error){message($("#passwordMessage"),error.message,true);return;}
+  history.replaceState(null,"",location.pathname+location.search);
+  $("#passwordView").hidden=true;
+  await enterWorkspace(data.user);
+  message($("#adminMessage"),"Password updated.");
 });
 
 $("#signOut").addEventListener("click",async()=>{
