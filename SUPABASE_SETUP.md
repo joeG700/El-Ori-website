@@ -16,7 +16,7 @@ This connects the GitHub Pages shop to a Supabase product catalog and enables th
 
 ## Create the admin login
 
-1. In Supabase, open Authentication > Users and add `elorriii02@gmail.com` with a strong password. Confirm the user if the dashboard offers that option.
+1. In Supabase, open Authentication > Users and send an invitation to `elorriii02@gmail.com`. Open the invitation email to finish account setup and choose a password.
 2. Open `https://joeg700.github.io/El-Ori-website/admin.html` and sign in with that email and password.
 3. Use **New product** to add items, edit details or photos, and archive or restore products.
 
