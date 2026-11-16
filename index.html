@@ -144,7 +144,7 @@ body.open #drawer{transform:none}
 
 <footer id="contact"><div class="wrap">
   <div><div class="mark" style="font-size:1.8rem">El-Ori</div><p style="opacity:.8;margin-top:6px">Jewellery &amp; Gifts</p></div>
-  <div><b>Order</b><a id="waFoot" href="#">WhatsApp</a><a id="igFoot" href="#">Instagram</a></div>
+  <div><b>Order</b><a id="waFoot" href="#">WhatsApp</a><a id="igFoot" href="#">Instagram: @el_orriii</a><a id="emailFoot" href="#">elorriii02@gmail.com</a><a id="snapFoot" href="#">Snapchat: @elori_lux</a></div>
   <div><b>Shop</b><a href="#shop">Collection</a><a href="#order">How to order</a><a href="#faq">FAQ</a></div>
   <p class="fine">&copy; <span id="yr"></span> El-Ori Lux. All rights reserved.</p>
 </div></footer>
@@ -168,7 +168,9 @@ body.open #drawer{transform:none}
 const CONFIG={
   brand:"El-Ori Lux",
   whatsapp:"233500249345",            // country code + number, no + or spaces. Example: 233241234567
-  instagram:"https://instagram.com/your_handle",
+  instagram:"https://instagram.com/el_orriii",
+  email:"elorriii02@gmail.com",
+  snapchat:"https://www.snapchat.com/add/elori_lux",
   momo:{network:"MTN MoMo",number:"233 50 298 1045",name:"Yaa Oforiwaa"},
   currency:"GH₵"
 };
@@ -234,7 +236,7 @@ $("#co").onsubmit=e=>{
 };
 $("#momo").textContent=`After we confirm your total, pay via ${CONFIG.momo.network} to ${CONFIG.momo.number} (${CONFIG.momo.name}).`;
 ["#waHero","#waFoot"].forEach(s=>$(s).href=wa("Hello "+CONFIG.brand+", I have a question."));
-$("#igFoot").href=CONFIG.instagram;$("#yr").textContent=new Date().getFullYear();
+$("#igFoot").href=CONFIG.instagram;$("#emailFoot").href="mailto:"+CONFIG.email;$("#snapFoot").href=CONFIG.snapchat;$("#yr").textContent=new Date().getFullYear();
 chips();grid();render();
 </script>
 </body>
