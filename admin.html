@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Product Admin | El-Ori Lux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gloock&family=Hanken+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1c1426;--soft:#6b6177;--bg:#fff;--tint:#faf6ff;--line:#e9def7;--lav:#c4a3f7;--grad:linear-gradient(100deg,#9bb8ff,#c4a3f7 55%,#e597fb);--display:'Gloock',Georgia,serif;--body:'Hanken Grotesk',system-ui,sans-serif}
+*{box-sizing:border-box;margin:0}
+body{font:400 1rem/1.5 var(--body);color:var(--ink);background:var(--bg)}
+a{color:inherit}
+button,input{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--lav);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line)}
+header .wrap{height:68px;display:flex;align-items:center;gap:20px}
+.mark{font:1.8rem/1 var(--display);background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;text-decoration:none}
+header .right{margin-left:auto;display:flex;align-items:center;gap:18px}
+header a:not(.mark){color:var(--soft);text-decoration:none}
+main{padding-top:46px;padding-bottom:72px}
+h1,h2{font-family:var(--display);font-weight:400}
+h1{font-size:2.4rem;line-height:1.1}
+h2{font-size:1.5rem;line-height:1.2;margin-bottom:18px}
+.lead{color:var(--soft);margin-top:8px}
+[hidden]{display:none!important}
+#loginView{max-width:420px;margin:32px auto}
+#loginForm,.editor{display:grid;gap:16px}
+label{display:grid;gap:6px;font-weight:700;font-size:.95rem}
+input[type=email],input[type=password],input[type=text],input[type=number],input[type=file]{width:100%;border:1px solid var(--line);border-radius:6px;padding:11px 12px;color:var(--ink);background:var(--bg)}
+input[type=file]{padding:8px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{border:0;border-radius:4px;padding:11px 18px;font-weight:700;color:#1c1426;background:var(--grad)}
+.btn.secondary{background:transparent;border:1px solid var(--lav);color:var(--ink)}
+.btn.danger{background:transparent;border:1px solid #bd5565;color:#8d2636}
+.message{min-height:1.5em;color:var(--soft);margin:12px 0}
+.message.error{color:#a32236}
+#workspace{margin-top:24px}
+.toolbar{display:flex;align-items:center;gap:16px;justify-content:space-between;margin-bottom:28px}
+.admin-grid{display:grid;grid-template-columns:minmax(260px,.78fr) minmax(0,1.22fr);gap:52px}
+.editor{align-content:start;border-top:2px solid var(--ink);padding-top:18px}
+.products{border-top:2px solid var(--ink);padding-top:18px}
+.check{display:flex;align-items:center;gap:9px;font-weight:500}
+.check input{width:18px;height:18px;accent-color:#685188}
+#imagePreview{width:96px;height:96px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.product-row{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.product-row img{width:64px;height:64px;object-fit:cover;border-radius:4px;background:var(--tint)}
+.product-row .details{min-width:0}
+.product-row h3{font-size:1rem;overflow-wrap:anywhere}
+.product-row p{font-size:.9rem;color:var(--soft)}
+.product-row .row-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.small-btn{border:1px solid var(--line);border-radius:4px;background:transparent;color:var(--ink);padding:6px 10px;font-size:.88rem}
+.small-btn:hover{border-color:var(--lav)}
+.archived{opacity:.58}
+@media(max-width:760px){main{padding-top:32px}.admin-grid{grid-template-columns:1fr;gap:36px}.toolbar{align-items:flex-start;flex-direction:column}.product-row{grid-template-columns:56px minmax(0,1fr)}.product-row img{width:56px;height:56px}.row-actions{grid-column:2;justify-content:flex-start!important}header .right{gap:10px}.mark{font-size:1.55rem}}
+@media(prefers-color-scheme:dark){:root{--ink:#f4eefc;--soft:#b3a8c2;--bg:#16101e;--tint:#1d1528;--line:#33274a}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <a class="mark" href="index.html">El-Ori LUX</a>
+  <div class="right"><a href="index.html">View shop</a><button class="btn secondary" id="signOut" type="button" hidden>Sign out</button></div>
+</div></header>
+<main class="wrap">
+  <section id="loginView">
+    <h1>Product admin</h1>
+    <p class="lead">Sign in with the shop owner account.</p>
+    <p class="message" id="loginMessage" role="status" aria-live="polite"></p>
+    <form id="loginForm">
+      <label>Email<input id="loginEmail" type="email" autocomplete="username" required></label>
+      <label>Password<input id="loginPassword" type="password" autocomplete="current-password" required></label>
+      <button class="btn" type="submit" id="loginButton">Sign in</button>
+    </form>
+  </section>
+
+  <section id="workspace" hidden>
+    <div class="toolbar">
+      <div><h1>Product catalog</h1><p class="lead">Add, update, or archive shop items.</p></div>
+      <button class="btn secondary" id="newProduct" type="button">New product</button>
+    </div>
+    <p class="message" id="adminMessage" role="status" aria-live="polite"></p>
+    <div class="admin-grid">
+      <section class="editor">
+        <h2 id="formTitle">Add a product</h2>
+        <form id="productForm">
+          <input id="productId" type="hidden">
+          <label>Product name<input id="productName" type="text" maxlength="100" required></label>
+          <label>Category<input id="productCategory" type="text" maxlength="40" list="categories" required></label>
+          <datalist id="categories"><option>Necklaces</option><option>Earrings</option><option>Rings</option><option>Bracelets</option><option>Gift sets</option></datalist>
+          <label>Price (GH₵)<input id="productPrice" type="number" min="0" step="0.01" required></label>
+          <label>Product photo<input id="productImage" type="file" accept="image/*"></label>
+          <img id="imagePreview" alt="Selected product photo" hidden>
+          <label class="check"><input id="productActive" type="checkbox" checked> Available in the shop</label>
+          <div class="actions">
+            <button class="btn" type="submit" id="saveProduct">Save product</button>
+            <button class="btn secondary" type="button" id="cancelEdit" hidden>Cancel edit</button>
+          </div>
+        </form>
+      </section>
+      <section class="products">
+        <h2>Products</h2>
+        <div id="productList" aria-live="polite"></div>
+      </section>
+    </div>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+const $=selector=>document.querySelector(selector);
+const config=window.SUPABASE_CONFIG||{};
+const client=window.supabase&&config.url&&config.anonKey?window.supabase.createClient(config.url,config.anonKey):null;
+const ownerEmail=(config.adminEmail||"").toLowerCase();
+let products=[];
+let selectedProduct=null;
+let previewUrl="";
+
+function message(target,text,isError=false){
+  target.textContent=text;
+  target.classList.toggle("error",isError);
+}
+function escapeHtml(value){
+  return String(value).replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+}
+function storagePath(imageUrl){
+  if(!imageUrl)return "";
+  try{
+    const path=new URL(imageUrl).pathname;
+    const marker="/storage/v1/object/public/product-images/";
+    return path.includes(marker)?decodeURIComponent(path.split(marker)[1]):"";
+  }catch{return "";}
+}
+function resetForm(){
+  selectedProduct=null;
+  $("#productForm").reset();
+  $("#productId").value="";
+  $("#productActive").checked=true;
+  $("#formTitle").textContent="Add a product";
+  $("#saveProduct").textContent="Save product";
+  $("#cancelEdit").hidden=true;
+  $("#imagePreview").hidden=true;
+  $("#imagePreview").removeAttribute("src");
+  $("#productImage").value="";
+}
+function editProduct(product){
+  selectedProduct=product;
+  $("#productId").value=product.id;
+  $("#productName").value=product.name;
+  $("#productCategory").value=product.category;
+  $("#productPrice").value=product.price;
+  $("#productActive").checked=product.active;
+  $("#formTitle").textContent="Edit product";
+  $("#saveProduct").textContent="Update product";
+  $("#cancelEdit").hidden=false;
+  $("#productImage").value="";
+  $("#imagePreview").hidden=!product.image_url;
+  if(product.image_url)$("#imagePreview").src=product.image_url;
+  $("#productName").focus();
+}
+function renderProducts(){
+  const list=$("#productList");
+  list.replaceChildren();
+  if(!products.length){
+    const empty=document.createElement("p");
+    empty.className="lead";empty.textContent="No products yet.";list.append(empty);return;
+  }
+  products.forEach(product=>{
+    const row=document.createElement("article");
+    row.className="product-row"+(product.active?"":" archived");
+    const image=document.createElement("img");
+    image.src=product.image_url||"";image.alt="";
+    const details=document.createElement("div");details.className="details";
+    details.innerHTML=`<h3>${escapeHtml(product.name)}</h3><p>${escapeHtml(product.category)} · GH₵${Number(product.price).toLocaleString()}</p><p>${product.active?"Available":"Archived"}</p>`;
+    const actions=document.createElement("div");actions.className="row-actions";
+    const edit=document.createElement("button");edit.className="small-btn";edit.type="button";edit.textContent="Edit";edit.onclick=()=>editProduct(product);
+    const toggle=document.createElement("button");toggle.className="small-btn";toggle.type="button";toggle.textContent=product.active?"Archive":"Restore";toggle.onclick=()=>toggleProduct(product);
+    actions.append(edit,toggle);row.append(image,details,actions);list.append(row);
+  });
+}
+async function loadProducts(){
+  const {data,error}=await client.from("products").select("id,slug,name,category,price,image_url,active,created_at").order("created_at",{ascending:false});
+  if(error)throw error;
+  products=data||[];renderProducts();
+}
+async function enterWorkspace(user){
+  if((user.email||"").toLowerCase()!==ownerEmail){
+    await client.auth.signOut();
+    message($("#loginMessage"),"This account is not authorized to manage the shop.",true);
+    return;
+  }
+  $("#loginView").hidden=true;
+  $("#workspace").hidden=false;
+  $("#signOut").hidden=false;
+  try{await loadProducts();message($("#adminMessage"),"");}
+  catch(error){message($("#adminMessage"),error.message||"Could not load products.",true);}
+}
+
+if(!client){
+  message($("#loginMessage"),"Connect the Supabase project in supabase-config.js before signing in.",true);
+  $("#loginButton").disabled=true;
+}else{
+  client.auth.getSession().then(({data,error})=>{
+    if(error){message($("#loginMessage"),error.message,true);return;}
+    if(data.session)enterWorkspace(data.session.user);
+  });
+}
+
+$("#loginForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  if(!client)return;
+  $("#loginButton").disabled=true;
+  message($("#loginMessage"),"Signing in...");
+  const {data,error}=await client.auth.signInWithPassword({email:$("#loginEmail").value.trim(),password:$("#loginPassword").value});
+  $("#loginButton").disabled=false;
+  if(error){message($("#loginMessage"),error.message,true);return;}
+  await enterWorkspace(data.user);
+});
+
+$("#signOut").addEventListener("click",async()=>{
+  await client.auth.signOut();
+  $("#workspace").hidden=true;$("#loginView").hidden=false;$("#signOut").hidden=true;
+  message($("#loginMessage"),"You are signed out.");
+});
+$("#newProduct").addEventListener("click",()=>{resetForm();$("#productName").focus();});
+$("#cancelEdit").addEventListener("click",resetForm);
+$("#productImage").addEventListener("change",event=>{
+  const file=event.target.files[0];
+  if(!file){$("#imagePreview").hidden=!selectedProduct?.image_url;if(selectedProduct?.image_url)$("#imagePreview").src=selectedProduct.image_url;return;}
+  if(previewUrl)URL.revokeObjectURL(previewUrl);
+  previewUrl=URL.createObjectURL(file);$("#imagePreview").src=previewUrl;$("#imagePreview").hidden=false;
+});
+
+async function toggleProduct(product){
+  const {error}=await client.from("products").update({active:!product.active}).eq("id",product.id);
+  if(error){message($("#adminMessage"),error.message,true);return;}
+  message($("#adminMessage"),product.active?"Product archived.":"Product restored.");
+  await loadProducts();
+}
+$("#productForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  const saveButton=$("#saveProduct");saveButton.disabled=true;
+  message($("#adminMessage"),"Saving product...");
+  let uploadedPath="";
+  try{
+    const name=$("#productName").value.trim();
+    const category=$("#productCategory").value.trim();
+    const price=Number($("#productPrice").value);
+    const file=$("#productImage").files[0];
+    if(!name||!category||!Number.isFinite(price)||price<0)throw new Error("Enter a name, category, and valid price.");
+    if(file&&(!file.type.startsWith("image/")||file.size>8*1024*1024))throw new Error("Choose an image smaller than 8 MB.");
+    let imageUrl=selectedProduct?.image_url||"";
+    if(file){
+      const extension=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+      uploadedPath=`${crypto.randomUUID()}.${extension}`;
+      const {error:uploadError}=await client.storage.from("product-images").upload(uploadedPath,file,{cacheControl:"3600",contentType:file.type,upsert:false});
+      if(uploadError)throw uploadError;
+      imageUrl=client.storage.from("product-images").getPublicUrl(uploadedPath).data.publicUrl;
+    }
+    const payload={
+      slug:selectedProduct?.slug||`${name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}-${crypto.randomUUID().slice(0,8)}`,
+      name,category,price,image_url:imageUrl,active:$("#productActive").checked
+    };
+    const result=selectedProduct
+      ?await client.from("products").update(payload).eq("id",selectedProduct.id)
+      :await client.from("products").insert(payload);
+    if(result.error)throw result.error;
+    if(file&&selectedProduct?.image_url){
+      const oldPath=storagePath(selectedProduct.image_url);
+      if(oldPath)await client.storage.from("product-images").remove([oldPath]);
+    }
+    const wasEditing=Boolean(selectedProduct);resetForm();await loadProducts();
+    message($("#adminMessage"),wasEditing?"Product updated.":"Product added.");
+  }catch(error){
+    if(uploadedPath)await client.storage.from("product-images").remove([uploadedPath]);
+    message($("#adminMessage"),error.message||"Could not save product.",true);
+  }finally{saveButton.disabled=false;}
+});
+</script>
+</body>
+</html>

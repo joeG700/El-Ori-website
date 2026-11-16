@@ -111,6 +111,7 @@ body.open #drawer{transform:none}
   <h2>The collection</h2>
   <p class="sub">Tap Add to cart, then send your order on WhatsApp.</p>
   <div class="chips" id="chips" role="group" aria-label="Filter by category"></div>
+  <p class="sub" id="catalogStatus" role="status" aria-live="polite">Loading the collection...</p>
   <div class="grid" id="grid"></div>
 </div></section>
 
@@ -163,6 +164,8 @@ body.open #drawer{transform:none}
   </form>
 </aside>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script>
 /* ===== EDIT THIS BLOCK ===== */
 const CONFIG={
@@ -175,7 +178,7 @@ const CONFIG={
   currency:"GH₵"
 };
 // img: put photos in an "images" folder next to index.html, e.g. "images/necklace1.jpg". Leave "" to show a colour block.
-const PRODUCTS=[
+const DEFAULT_PRODUCTS=[
   {id:1,name:"Layered Gold Necklace",cat:"Necklaces",price:180,img:""},
   {id:2,name:"Pearl Drop Necklace",cat:"Necklaces",price:220,img:""},
   {id:3,name:"Statement Hoop Earrings",cat:"Earrings",price:120,img:""},
@@ -185,10 +188,15 @@ const PRODUCTS=[
   {id:7,name:"Charm Bracelet",cat:"Bracelets",price:160,img:""},
   {id:8,name:"Gift Set: Necklace + Earrings",cat:"Gift sets",price:300,img:""}
 ];
+let PRODUCTS=DEFAULT_PRODUCTS;
 /* ===== END EDIT BLOCK ===== */
 
 const $=s=>document.querySelector(s), money=n=>CONFIG.currency+n.toLocaleString();
 const wa=(t="")=>"https://wa.me/"+CONFIG.whatsapp+(t?"?text="+encodeURIComponent(t):"");
+const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+const supabaseConfig=window.SUPABASE_CONFIG||{};
+const supabaseClient=window.supabase&&supabaseConfig.url&&supabaseConfig.anonKey
+  ?window.supabase.createClient(supabaseConfig.url,supabaseConfig.anonKey):null;
 let cart={},cat="All";
 try{cart=JSON.parse(localStorage.getItem("elori-cart")||"{}")}catch(e){}
 const save=()=>{try{localStorage.setItem("elori-cart",JSON.stringify(cart))}catch(e){}};
@@ -196,27 +204,48 @@ const tones=[["#9bb8ff","#c4a3f7"],["#c4a3f7","#e597fb"],["#e597fb","#9bb8ff"]];
 
 function chips(){
   const cats=["All",...new Set(PRODUCTS.map(p=>p.cat))];
-  $("#chips").innerHTML=cats.map(c=>`<button class="chip" aria-pressed="${c===cat}" data-c="${c}">${c}</button>`).join("");
+  $("#chips").innerHTML=cats.map(c=>`<button class="chip" aria-pressed="${c===cat}" data-c="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join("");
 }
 function grid(){
-  $("#grid").innerHTML=PRODUCTS.filter(p=>cat==="All"||p.cat===cat).map(p=>{
-    const t=tones[p.id%3];
-    const pic=p.img?`<img src="${p.img}" alt="${p.name}" loading="lazy">`:p.name[0];
+  $("#grid").innerHTML=PRODUCTS.filter(p=>cat==="All"||p.cat===cat).map((p,index)=>{
+    const t=tones[index%tones.length];
+    const name=escapeHtml(p.name),image=escapeHtml(p.img);
+    const pic=p.img?`<img src="${image}" alt="${name}" loading="lazy">`:name[0];
     return `<article class="item"><div class="ph" style="background:linear-gradient(135deg,${t[0]},${t[1]})">${pic}</div>
-    <h3>${p.name}</h3><div class="cat">${p.cat}</div>
+    <h3>${name}</h3><div class="cat">${escapeHtml(p.cat)}</div>
     <div class="row"><span class="price">${money(p.price)}</span><button class="add" data-id="${p.id}">Add to cart</button></div></article>`}).join("");
 }
 function render(){
-  const ids=Object.keys(cart).filter(id=>cart[id]>0);
+  const ids=Object.keys(cart).filter(id=>cart[id]>0&&PRODUCTS.some(p=>String(p.id)===id));
   let total=0,n=0;
   $("#lines").innerHTML=ids.length?ids.map(id=>{
-    const p=PRODUCTS.find(x=>x.id==id),q=cart[id];total+=p.price*q;n+=q;
-    return `<div class="line"><div class="t">${p.name}<small>${money(p.price)} each</small></div>
+    const p=PRODUCTS.find(x=>String(x.id)===id),q=cart[id];total+=p.price*q;n+=q;
+    return `<div class="line"><div class="t">${escapeHtml(p.name)}<small>${money(p.price)} each</small></div>
     <div class="q"><button data-d="-1" data-id="${id}" aria-label="Remove one">&minus;</button><span>${q}</span><button data-d="1" data-id="${id}" aria-label="Add one">+</button></div></div>`}).join(""):
     `<p class="empty">Your cart is empty. Add a piece from the collection.</p>`;
   $("#total").textContent=money(total);$("#count").textContent=n;
   $("#co").style.display=ids.length?"block":"none";
   save();
+}
+async function loadProducts(){
+  const status=$("#catalogStatus");
+  if(!supabaseConfig.url||!supabaseConfig.anonKey){
+    PRODUCTS=DEFAULT_PRODUCTS;
+  }else if(!supabaseClient){
+    PRODUCTS=[];status.textContent="The collection is temporarily unavailable. Please try again later.";
+  }else{
+    const {data,error}=await supabaseClient.from("products")
+      .select("id,name,category,price,image_url,active")
+      .eq("active",true).order("created_at",{ascending:false});
+    if(error){
+      console.error("Could not load products",error);
+      PRODUCTS=[];status.textContent="The collection is temporarily unavailable. Please try again later.";
+    }else{
+      PRODUCTS=data.map(product=>({id:product.id,name:product.name,cat:product.category,price:Number(product.price),img:product.image_url||""}));
+    }
+  }
+  if(PRODUCTS.length)status.textContent="";
+  chips();grid();render();
 }
 const setOpen=o=>{document.body.classList.toggle("open",o);$("#drawer").setAttribute("aria-hidden",!o)};
 
@@ -229,15 +258,15 @@ $("#openCart").onclick=()=>setOpen(true);$("#closeCart").onclick=$("#veil").oncl
 document.addEventListener("keydown",e=>{if(e.key==="Escape")setOpen(false)});
 $("#co").onsubmit=e=>{
   e.preventDefault();
-  const ids=Object.keys(cart).filter(id=>cart[id]>0);let total=0;
-  const lines=ids.map(id=>{const p=PRODUCTS.find(x=>x.id==id);total+=p.price*cart[id];return `- ${cart[id]} x ${p.name} (${money(p.price*cart[id])})`});
+  const ids=Object.keys(cart).filter(id=>cart[id]>0&&PRODUCTS.some(p=>String(p.id)===id));let total=0;
+  const lines=ids.map(id=>{const p=PRODUCTS.find(x=>String(x.id)===id);total+=p.price*cart[id];return `- ${cart[id]} x ${p.name} (${money(p.price*cart[id])})`});
   const msg=`Hello ${CONFIG.brand}, I would like to order:\n${lines.join("\n")}\nItems total: ${money(total)}\n\nName: ${$("#nm").value}\nPhone: ${$("#ph").value}\nDelivery: ${$("#ad").value}\n\nPlease confirm the delivery fee and payment details.`;
   window.open(wa(msg),"_blank");
 };
 $("#momo").textContent=`After we confirm your total, pay via ${CONFIG.momo.network} to ${CONFIG.momo.number} (${CONFIG.momo.name}).`;
 ["#waHero","#waFoot"].forEach(s=>$(s).href=wa("Hello "+CONFIG.brand+", I have a question."));
 $("#igFoot").href=CONFIG.instagram;$("#emailFoot").href="mailto:"+CONFIG.email;$("#snapFoot").href=CONFIG.snapchat;$("#yr").textContent=new Date().getFullYear();
-chips();grid();render();
+loadProducts();
 </script>
 </body>
 </html>
